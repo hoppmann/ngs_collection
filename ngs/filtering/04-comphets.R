@@ -29,18 +29,18 @@ print (options)
 
 ######## cut out due to commandline options ########
 
-# #to adapt (has to be family ID)
-# name = "613"
-# 
-#  # can be found in last loop or in original file needed is the column number of gt_type.father gt_type.mother
-# 
-# idPatient = 1
-# idMother = 2
-# idFather = 3
-# idBrother = 4
-# 
-# 
-# fileIN = "613-VEP-all_out.txt"
+#to adapt (has to be family ID)
+name = "719"
+
+ # can be found in last loop or in original file needed is the column number of gt_type.father gt_type.mother
+
+idPatient = 1
+idMother = 2
+idFather = 3
+idBrother = 4
+
+
+fileIN = "719-vep-snpeff-all.out"
 
 
 ######## beyond in script again ########
@@ -51,7 +51,7 @@ dir.create(file.path(outDir), showWarnings = FALSE)
 
 
 #read in raw data from gemini
-data = read.table (fileIN, h = T)
+data = read.table (fileIN, h = T, sep = "\t")
 
 #################################
 ######## comp het search ########
@@ -59,7 +59,6 @@ data = read.table (fileIN, h = T)
 
 #define variables
 impacts = c("HIGH", "MED")
-
 #get coulumn number of father and mother
 gtPatient = match (paste("gt_types.", name, "_", idPatient, sep = ""), colnames (data))
 gtOne = match (paste("gt_types.", name, "_", idFather, sep = ""), colnames (data))

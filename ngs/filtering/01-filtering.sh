@@ -3,13 +3,11 @@ then
 mkdir out
 fi
 
-columns="gene, chrom, start, ref, alt, depth, qual, transcript, is_conserved, gerp_bp_score, aaf_1kg_eur, impact_severity, impact, exon, is_lof, codon_change, aa_change, pfam_domain, polyphen_pred, polyphen_score, sift_pred, sift_score, (gt_depths).(*), (gts).(*), (gt_types).(*)"
-
 . /h/hoppmann/scripts/ngs/filtering/00-columns.sh
 
 #define database
 dbDir="/data/ngs/rohdaten/kinderklinik/2015-03-05_run7/out/11-databases/213-VEP.db"
-gemini="/data/ngs/bin/gemini/bin/gemini"
+#gemini="/data/ngs/bin/gemini/anaconda/bin/gemini"
 
 
 #define out dir
@@ -66,7 +64,7 @@ echo "# HET in patient, HOM_REF in Parents" >> $OUT
 echo "# severity HIGH or null" >> $OUT
 echo "" >> $OUT
 
-$gemini query -q "select $columns from variants \
+gemini query -q "select $columns from variants \
 where (impact_severity == 'HIGH' or impact_severity is null) \
 and (aaf_1kg_eur < 0.01 or aaf_1kg_eur is null) " \
 --gt-filter "gt_types.213_1 == 1 and (gt_types.213_2 == 0 or gt_types.213_2 == 2) and (gt_types.213_3 == 0 or gt_types.213_3 == 2)" \
@@ -85,7 +83,7 @@ echo "# HET in patient, HOM_REF in Parents" >> $OUT
 echo "# severity MED, HIGH or null" >> $OUT
 echo "" >> $OUT
 
-$gemini query -q "select $columns from variants \
+gemini query -q "select $columns from variants \
 where (impact_severity == 'MED' or impact_severity == 'HIGH' or impact_severity is null) \
 and (aaf_1kg_eur < 0.01 or aaf_1kg_eur is null) " \
 --gt-filter "gt_types.213_1 == 1 and (gt_types.213_2 == 0 or gt_types.213_2 == 2) and (gt_types.213_3 == 0 or gt_types.213_3 == 2)" \

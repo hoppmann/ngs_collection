@@ -1,6 +1,6 @@
 #!/bin/bash
 #General definitions
-gemini="/data/ngs/bin/gemini/bin/gemini"
+#gemini="/data/ngs/bin/gemini/bin/gemini"
 dbDir=$1
 
 # list of genes for lookup
@@ -17,7 +17,7 @@ do
 	echo "#### $gene ####" 
 	echo "" 
 	
-	$gemini query -q "select $columns from variants where gene ='$gene' " \
+	gemini query -q "select $columns from variants where gene ='$gene' " \
 	--header \
 	$dbDir  
 	echo ""
