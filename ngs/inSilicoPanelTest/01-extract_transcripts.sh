@@ -1,10 +1,22 @@
 ######### extract transcript reagions from database ########
 
+
+
+
+# get file in name
+fileIn=$1
+file=$(basename $fileIn)
+fileName=${file%.*}
+
+# define out dir 
+outDir="$2"
+fileOut="$outDir/$fileName-transcripts.pos"
+
+
 # for each gene in gene list extract transcripts
-outDir="03-extract_exons"
-fileIn="01-create-gene-panel/Panel_genes.final.csv"
-fileOut="$outDir/transcript.pos"
-dbIn="02-create_db/exon.db"
+scriptPath=$(dirname $0)
+#dbIn="$scriptPath/00-data/exon.db"
+dbIn="/h/hoppmann/scripts/ngs/inSilicoPanelTest/00-data/exon.db"
 table=CCDS_GRCh37
 
 # create directory if neede
@@ -25,7 +37,7 @@ fi
 #echo "gene	chr	cds_from	cds_to	cds_locations" > $fileOut
 
 count=0
-for i in $(cat $fileIn)
+for i in $(cat $fileIn | awk '{print $1}')
 do
 	length=$(cat $fileIn | wc -l)
 	count=$((count+1))

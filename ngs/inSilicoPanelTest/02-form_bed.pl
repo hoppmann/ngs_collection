@@ -3,12 +3,18 @@ use feature ':5.10';
 use strict 'vars';
 use warnings;
 
-system("clear");
+#system("clear");
 
 
-my $outDir = "03-extract_exons";
-my $fileName = "$outDir/transcript.pos";
-my $fileOut = "$outDir/panel.bed";
+my $outDir = $ARGV[0];
+my $fileName = "$outDir/$ARGV[1]-transcripts.pos";
+
+# create directory for bed files
+mkdir("$outDir/bed");
+#my $fileOut = "$outDir/Panel.bed";
+
+# define a flanking region of each gene to include splice site variations
+my $flanking = 25;
 
 
 # read in input file
@@ -75,34 +81,55 @@ for my $key (keys %genes){
 
 ## save gene in bed file
 ## open output file
-open (OUT, "> $fileOut");
+
 
 foreach my $curGene (keys %longTrans){
 	
+	# create variable for line collection for later print
+	my @outLines;
+		
 	# get chromosom
 	my $chrRef = ${$chr{$curGene}};
 	my $chr = $$chrRef;
 	
 	#get array of exons
 	my @exons = @{$longTrans{$curGene}};
-	
+	chomp @exons;	
 	# save each exon as bed entry and add exon number
 	my $counter = 1;
 	my $numberExons = @exons;
 	foreach my $exon (@exons){
-	
+		chomp $exon;
 		my ($start, $end) = split(/-/, $exon);
-	
-		say OUT "chr$chr\t$start\t$end\t$curGene\t$counter/$numberExons";
-	
+		
+		#add flanking to exons to include splice sites
+		# exclude genes with no known exon
+		next if ($start eq "" || $end eq "");
+		$start = $start - $flanking;
+		$end = $end + $flanking;
+		
+		# save in file		
+		my $line = "chr$chr\t$start\t$end\t$curGene\t$counter/$numberExons";
+		push (@outLines, $line);
+
 		# increment counter
 		$counter++;
+	}
+	
+	
+	# if lines for outfile available print in file
+	if ($#outLines != 0){
+		# open out file
+		my $fileOut = "$outDir/bed/$curGene.bed";
+		open (OUT, "> $fileOut");
+		say OUT join ("\n", @outLines);
+		close (OUT);
 	}
 }
 
 
 
-close (OUT);
+
 
 
 
