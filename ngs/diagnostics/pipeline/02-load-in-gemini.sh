@@ -1,3 +1,8 @@
+#!/bin/bash
+#SBATCH --mailType=FAIL
+#SBATCH --cpus-per-task=6
+
+
 
 ## recive in and out directories
 inDir=$1
@@ -12,41 +17,23 @@ gemini="/data/ngs/bin/gemini/anaconda/bin/gemini"
 
 #extract number of possible cpu
 CPU=$(cat /proc/cpuinfo | grep processor | wc -l)
-
-
-#for i in $(ls $1/*-vep-snpeff.vcf.gz)
-#do
-
-#        filename=$(basename "$i")
-#        filename="${filename%.*}"
-#        filename="${filename%.*}"
-#       
-
-#	echo $filename
-#	echo $i
-
-#	gemini load \
-#	-t VEP \
-#	--cores $CPU \
-#	-v $i \
-#	$outDir/$filename.db
-#done
+CPU=6
 
 
 
-# old version didn't annotate cdna position due to snpEff 
-for i in $(ls $1/*-vep-snpeff.vcf.gz)
+# old version didn't annotate cdna position due to snpEff
+for i in $(ls $1/*.vcf.gz)
 do
 
         filename=$(basename "$i")
 #        filename="${filename%.*}"
         filename="${filename%-vep-snpeff.vcf.gz}"
-       
+
 	echo $filename
 	echo $i
 
 	gemini load \
-	-t VEP \
+	-t all \
 	--cores $CPU \
 	-v $i \
 	$outDir/$filename.db
