@@ -76,8 +76,10 @@ do
 		
 done
 
+wait
+
 # extract overall coverage for each out file
-for i in $(ls $outDir/*.xls)
+for i in $(ls $outDir/*.csv)
 do 
 	echo $i
 	head -n 1 $i

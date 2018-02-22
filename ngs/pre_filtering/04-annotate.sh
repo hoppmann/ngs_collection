@@ -1,4 +1,4 @@
-OUT=04-annotated
+OUT=01-annotated
 
 
 # progs
@@ -44,9 +44,11 @@ do
         --numbers \
         --biotype \
         --total_length \
+        --check_existing \
+        --canonical \
+        --pubmed \
         --vcf \
-        --offline \
-        --fields Consequence,Codons,Amino_acids,Gene,SYMBOL,Feature,EXON,PolyPhen,SIFT,Protein_position,BIOTYPE
+        --offline
         
         
         

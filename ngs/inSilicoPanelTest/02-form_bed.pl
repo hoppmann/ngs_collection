@@ -54,6 +54,8 @@ foreach my $line (@inputFile){
 }
 
 
+
+
 # check for longest transcript
 my %longTrans = ();
 for my $key (keys %genes){
@@ -98,9 +100,11 @@ foreach my $curGene (keys %longTrans){
 	# save each exon as bed entry and add exon number
 	my $counter = 1;
 	my $numberExons = @exons;
+	
 	foreach my $exon (@exons){
 		chomp $exon;
 		my ($start, $end) = split(/-/, $exon);
+		
 		
 		#add flanking to exons to include splice sites
 		# exclude genes with no known exon
@@ -112,13 +116,16 @@ foreach my $curGene (keys %longTrans){
 		my $line = "chr$chr\t$start\t$end\t$curGene\t$counter/$numberExons";
 		push (@outLines, $line);
 
+
 		# increment counter
 		$counter++;
 	}
 	
-	
 	# if lines for outfile available print in file
-	if ($#outLines != 0){
+	
+	
+	
+	if (@outLines){
 		# open out file
 		my $fileOut = "$outDir/bed/$curGene.bed";
 		open (OUT, "> $fileOut");

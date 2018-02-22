@@ -19,10 +19,14 @@ $bamFile or die "bamfile dir missing.\n";
 $outDir or die "out dir missing.\n";
 
 
+# define variables
+my $minCov = 30;
+
+
 # get name for outFile
 my $fileName = basename($bedFile);
 $fileName =~ s/\..*$//;
-my $outFile = "$outDir/$fileName.xls";
+my $outFile = "$outDir/$fileName.csv";
 
 
 # check if outfile exist else create it
@@ -148,7 +152,7 @@ foreach my $curBamFile (keys %infoGather) {
 		# check if exon is sufficient covered
 		my $meanCov = ($curLine[$#curLine]);
 		
-		if ($meanCov >= 20) {
+		if ($meanCov >= 30) {
 			
 			$goodExon++;
 			

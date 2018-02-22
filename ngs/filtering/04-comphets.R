@@ -30,23 +30,23 @@ print (options)
 ######## cut out due to commandline options ########
 
 #to adapt (has to be family ID)
-name = "719"
+# name = "30_13"
+# 
+#  # can be found in last loop or in original file needed is the column number of gt_type.father gt_type.mother
+# 
+# idPatient = 1
+# idMother = 2
+# idFather = 3
+# idBrother = 4
 
- # can be found in last loop or in original file needed is the column number of gt_type.father gt_type.mother
 
-idPatient = 1
-idMother = 2
-idFather = 3
-idBrother = 4
-
-
-fileIN = "719-vep-snpeff-all.out"
+# fileIN = "consensus-vep-snpEff-all.out"
 
 
 ######## beyond in script again ########
 
 #create directory for output
-outDir = "out"
+outDir = "09-filter"
 dir.create(file.path(outDir), showWarnings = FALSE)
 
 
@@ -79,12 +79,12 @@ for (impact in impacts) {
 	if (impact == "MED" ){
 		
 		#create subsets with impactseverity HIGH or MED & aaf_1kgp < 0.01 or NONE & HET
-		potentialGenes = data[(data$impact_severity == "HIGH" | data$impact_severity == "MED") & data[[columnName]] == 1  & (is.na(data$aaf_1kg_eur) | data$aaf_1kg_eur < 0.01), ]
+		potentialGenes = data[(data$impact_severity == "HIGH" | data$impact_severity == "MED") & data[[columnName]] == 1  & (is.na(data$aaf_1kg_eur) | data$aaf_1kg_eur < 0.01 | data$aaf_1kg_eur > 0.99), ]
 		
 	} else if (impact == "HIGH") {
 		
 		#create subsets with impactseverity HIGH & aaf_1kgp < 0.01 or NONE & HET
-		potentialGenes = data[(data$impact_severity == "HIGH" ) & data[[columnName]] == 1  & (is.na(data$aaf_1kg_eur) | data$aaf_1kg_eur < 0.01), ]
+		potentialGenes = data[(data$impact_severity == "HIGH" ) & data[[columnName]] == 1  & (is.na(data$aaf_1kg_eur) | data$aaf_1kg_eur < 0.01 | data$aaf_1kg_eur > 0.99), ]
 	}
 	
 	#get list of unique genes
@@ -184,8 +184,8 @@ for (impact in impacts) {
 	# write.table(unique(outList$gene), "/media/anselm/Daten/tmp/filtern/out/30_11_1_unique_genes.txt", row.names = F, col.names = T, quote = F)
 	
 	#save output
-	write.table (potentialGenePairs, paste(outDir, "/", outName,"_comp_het_pairs.xls", sep=""), row.names=F, col.names = T, quote = F, sep = "\t")
-	write.table (uniqueStart, paste(outDir, "/", outName, "_comp_het_positions.xls", sep=""), row.names=F, col.names = T, quote = F, sep = "\t")
+	write.table (potentialGenePairs, paste(outDir, "/", outName,"_comp_het_pairs.out", sep=""), row.names=F, col.names = T, quote = F, sep = "\t")
+	write.table (uniqueStart, paste(outDir, "/", outName, "_comp_het_positions.out", sep=""), row.names=F, col.names = T, quote = F, sep = "\t")
 }
 
 rm(data, gtOne, gtTwo, columnName, impact, impacts, name, outName, potentialGenePairs, uniqueStart, idFather, idMother)

@@ -1,4 +1,8 @@
 #!/bin/bash
+#SBATCH --mail-type=FAIL
+#SBATCH --mail-type=END
+#SBATCH --cpus-per-task=6
+
 clear
 
 #### recive folder containing vcf files

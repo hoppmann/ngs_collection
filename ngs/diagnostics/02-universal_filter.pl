@@ -7,7 +7,7 @@ use Pod::Usage;
 use DBI;
 use File::Basename;
 use File::Path;
-
+use experimental 'smartmatch';
 
 
 =head1 NAME
@@ -16,16 +16,18 @@ use File::Path;
 
 Options:
 
-	-help		brief help message
-	-man		full documentation
-	-database	name of the gemini database to use (mandatory option)
-	-panel		name of the panel file to use (tab seperated list of gene and corresponding transcript)
-	-outDir		name of the output directory (default = "04-filter")
-	-lookup		TODO: if choosen only the gene of choice will be looked uped (to be implemented)
-	-patID		the patient ID to query for, if not given the patID is extracted automatically
-	-trio		if chosen an trio analysis will be performed
+	-help					brief help message
+	-man					full documentation
+	-database			name of the gemini database to use (mandatory option)
+	-panel				name of the panel file to use (tab seperated list of gene and corresponding transcript)
+	-outDir				name of the output directory (default = "04-filter")
+	-lookup				if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
+	-screen				if chosen the lookup outout is printed on screen instead of a file
+	-all					if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
+	-patID				the patient ID to query for, if not given the patID is extracted automatically
+	-trio					if chosen an trio analysis will be performed
 	-parentalIDs	the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
-	-printCmd	if chosen instead of executing the filter, the filter command is printed to screen
+	-cmdOnly			if chosen instead of executing the filter, the filter command is printed to screen
 
 
 =head1 DESCRIPTION
@@ -39,6 +41,8 @@ my $panel;
 my $dbName;
 my $outFolder;
 my $lookup;
+my $all;
+my $screen;
 my $torrent;
 my $patID;
 my $trio;
@@ -46,16 +50,18 @@ my @parentalIDs;
 my $cmdOnly;
 
 my $result = GetOptions (
-				"help"			=> \$help,
-				"man"			=> \$man,
-				"panel=s"		=> \$panel,
-				"database=s"		=> \$dbName,
-				"outDir=s"		=> \$outFolder,
-				"lookup=s"		=> \$lookup,
-				"patID=s"		=> \$patID,
-				"trio"			=> \$trio,
+				"help"							=> \$help,
+				"man"								=> \$man,
+				"panel=s"						=> \$panel,
+				"database=s"				=> \$dbName,
+				"outDir=s"					=> \$outFolder,
+				"lookup=s"					=> \$lookup,
+				"screen"						=> \$screen,
+				"all"								=> \$all,
+				"patID=s"						=> \$patID,
+				"trio"							=> \$trio,
 				"parentalIDs=s{2}"	=> \@parentalIDs,
-				"printCmd"		=> \$cmdOnly,
+				"cmdOnly"						=> \$cmdOnly,
 			);
 pod2usage(-exitstatus => 1, -verbose => 1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -75,9 +81,15 @@ my $columns = "/h/hoppmann/scripts/ngs/filtering/00-columns.sh";
 $dbName or die "No database given. Use option -database\n";
 die "Database $dbName not found.\n" if (! -f $dbName);
 
-#####################################################################
-######## extract patient ID from database and prepare out dir #######
-#####################################################################
+
+
+
+
+
+
+#######################################################################
+######## extract patient ID (from database) and prepare out dir #######
+#######################################################################
 
 
 my @patID;
@@ -100,6 +112,14 @@ if (! $patID){
 $outFolder = "04-filter" if (! $outFolder);
 
 
+
+
+
+
+
+
+
+
 #####################################################
 ######## read in panel file and save in hash ########
 #####################################################
@@ -119,15 +139,20 @@ if ($panel){
 		chomp $_;
 		next if ($_ eq "");
 		my @splitLine = split ("\t", $_);
+
 		my $geneName = $splitLine[0];
-		my $transcript = $splitLine[1];
+		# remove all non-alphanumerical letters to avoid bug
+		$geneName =~ s/\W//g;
 
-		# remove version number from transcript
-		if ( $transcript){
-			$transcript =~ s/\..*$//;
-
+		## split mode of inheritance in case of more then one MOI
+		my @mois;
+		if ($splitLine[1] && $splitLine[1] ne "" && $splitLine[1]!~ /^\s$/) {
+			@mois = split (",", $splitLine[1]);
+			@mois = grep(s/\s*$//g, @mois);
+	}
+		if (@mois){
 			# save info in hash for later use
-			$panelInfo{$geneName} = $transcript;
+			$panelInfo{$geneName} = \@mois;
 		} else {
 			$panelInfo{$geneName} = "";
 		}
@@ -142,9 +167,14 @@ if ($panel){
 
 
 
-#
-# say join ("\t", keys %panelInfo);
-# die;
+
+
+
+
+
+
+
+
 
 
 
@@ -172,13 +202,9 @@ foreach my $pat (@patID){
 	$cols =~ s/columns=//g;
 	$cols =~ s/"//g;
 
-
-	if (!$trio){
-		$cols =~ s/\(gt_depths\)\.\(\*\)/gt_depths\.$pat/g;
-		$cols =~ s/\(gts\)\.\(\*\)/gts.$pat/g;
-		$cols =~ s/\(gt_types\)\.\(\*\)/gt_types.$pat/g;
-	} elsif ($trio) {
-
+	####################
+	######## adapt genotyp output
+	if ($trio) {
 
 		#### remove all instances of gt_* and add new ones per ID
 		$cols =~ s/, \(gt_depths\)\.\(\*\)//g;
@@ -198,6 +224,14 @@ foreach my $pat (@patID){
 			$cols .= ", gt_types.$curID";
 		}
 
+	} elsif ($all) {
+
+		#### use wildcards as found in file
+
+	} else {
+		$cols =~ s/\(gt_depths\)\.\(\*\)/gt_depths\.$pat/g;
+		$cols =~ s/\(gts\)\.\(\*\)/gts.$pat/g;
+		$cols =~ s/\(gt_types\)\.\(\*\)/gt_types.$pat/g;
 	}
 
 
@@ -214,27 +248,22 @@ foreach my $pat (@patID){
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 	#####################################################################
 	######## prepare neccessary information for filter production #######
 	#####################################################################
-	# out file names; depeding on the filter situation
-#	my $outDomHigh;
-#	my $outDomMed;
-#	my $outRecHigh;
-#	my $outRecMed;
-#	if (! $trio ) {
-#		$outDomHigh = "$outDir/$pat-DOM-HIGH.out";
-#		$outDomMed = "$outDir/$pat-DOM-MED.out";
-#		$outRecHigh = "$outDir/$pat-REC-HIGH.out";
-#		$outRecMed = "$outDir/$pat-REC-MED.out";
-#	} else {
-#
-#		$outDomHigh = "$outDir/$pat-DOM-HIGH-trio.out";
-#		$outDomMed = "$outDir/$pat-DOM-MED-trio.out";
-#		$outRecHigh = "$outDir/$pat-REC-HIGH-trio.out";
-#		$outRecMed = "$outDir/$pat-REC-MED-trio.out";
-#
-#	}
+
 	# arrays containing filter specifications
 	my @domHigh = ("DOM", "HIGH");
 	my @domMed = ("DOM", "MED");
@@ -245,11 +274,13 @@ foreach my $pat (@patID){
 	my @lookupAll = ("LUP", "ALL");
 	my @compHetHigh = ("COMP", "HIGH");
 	my @compHetMed = ("COMP", "MED");
+	my @xlHigh = ("XL", "HIGH");
+	my @xlMed = ("XL", "MED");
 
 	# save in hash
 	my @difFilters;
 	if ($panel){
-		@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@compHetHigh, \@compHetMed, \@lookupHigh, \@lookupMed, \@lookupAll);
+		@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@xlHigh, \@xlMed, \@compHetHigh, \@compHetMed, \@lookupHigh, \@lookupMed, \@lookupAll);
 	} else {
 		@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@compHetHigh, \@compHetMed);
 	}
@@ -267,6 +298,7 @@ foreach my $pat (@patID){
 
 
 	foreach my $curFilter (@difFilters){
+
 
 		#init variables
 		my $preSql;
@@ -310,29 +342,84 @@ foreach my $pat (@patID){
 
 		if ($panel){
 			my $setOr = 0;
+
+
 			foreach my $curGene (keys %panelInfo){
-				# every time besides first time add the or expression
-				if (!$setOr) {
-					push (@sqlQuery, "and ( \\\n");
-					$setOr = 1;
-				} else {
-					push (@sqlQuery, "or ");
+
+				#####################
+				#### add genes that have concurrend MOI
+
+				## check for dominat and COMP_HET genes
+				if (@$curFilter[0] eq "DOM" ) {
+
+
+					#### following lines should probably replace other if clauses due to experimental design
+					# if ((grep /^AD$/, @{$panelInfo{$curGene}}) || ! exists ${$panelInfo{$curGene}}[0] ){
+					# 	my $pan = $panelInfo{$curGene};
+					# 	say $curGene;
+					# }
+
+
+
+					if ("AD" ~~ @{$panelInfo{$curGene}} || $panelInfo{$curGene} eq ""){
+						# every time besides first time add the or expression
+						if (!$setOr) {
+							push (@sqlQuery, "and ( \\\n(gene = '$curGene') \\\n");
+							$setOr = 1;
+						}  else {
+						 	push (@sqlQuery, "or (gene = '$curGene') \\\n");
+						}
+					}
+
+
+
+
+					## check for recessive genes
+				} elsif (@$curFilter[0] eq "REC" || @$curFilter[0] eq "COMP") {
+					if ("AR" ~~ @{$panelInfo{$curGene}} || $panelInfo{$curGene} eq ""){
+						# every time besides first time add the or expression
+						if (!$setOr) {
+							push (@sqlQuery, "and ( \\\n(gene = '$curGene') \\\n");
+							$setOr = 1;
+						}  else {
+							push (@sqlQuery, "or (gene = '$curGene') \\\n");
+						}
+					}
+
+
+
+					## check if lookup if so add all genes
+				} elsif (@$curFilter[0] eq "LUP") {
+					# every time besides first time add the or expression
+					if (!$setOr) {
+						push (@sqlQuery, "and ( \\\n(gene = '$curGene') \\\n");
+						$setOr = 1;
+					}  else {
+						push (@sqlQuery, "or (gene = '$curGene') \\\n");
+					}
+
+
+
+
+					## check if x-Linked case is chosen
+				} elsif (@$curFilter[0] eq "XL") {
+					if ("XL" ~~ @{$panelInfo{$curGene}} || "XLD" ~~ @{$panelInfo{$curGene}} || "XLR" ~~ @{$panelInfo{$curGene}}){
+						# every time besides first time add the or expression
+						if (!$setOr) {
+							push (@sqlQuery, "and ( \\\n(gene = '$curGene') \\\n");
+							$setOr = 1;
+						}  else {
+							push (@sqlQuery, "or (gene = '$curGene') \\\n");
+						}
+					}
 				}
-
-
-		######## Transcripts are excluded due to the fact, that VEP only emmits the transcript with the most severe impact.
-#				if ($panelInfo{$curGene}) {
-#					push (@sqlQuery, "(gene = '$curGene' and transcript = '$panelInfo{$curGene}') \\\n");
-#				} else {
-					push (@sqlQuery, "(gene = '$curGene') \\\n");
-#				}
-
 			}
 
 
 			# close bracket to conclude block of panel genes
 			push (@sqlQuery, ") \\\n");
 		}
+
 
 
 
@@ -355,20 +442,28 @@ foreach my $pat (@patID){
 		# 1 = HET
 		# 3 = HOM_ALT
 
-
-
+		#####################
+		######## no trio analysis
 		if (! $trio){
+
+			## recessive case: HOM_ALT variant
 			if (@$curFilter[0] eq "REC"){
 
 				$postSql .= "--gt-filter \"gt_types.$pat == HOM_ALT\" \\\n";
 
+			## dom or comp_het case: HET variant
 			} elsif (@$curFilter[0] eq "DOM" || @$curFilter[0] eq "COMP" ){
 
 				$postSql .= "--gt-filter \"gt_types.$pat == HET\" \ \\\n";
 
-			} elsif (@$curFilter[0] eq "LUP" ) {
-
+				## Lookup case: all variants that aren't ./.
+			} elsif (@$curFilter[0] eq "LUP" || @$curFilter[0] eq "XL") {
+				$postSql .= "--gt-filter \"gt_types.$pat != 2\" \ \\\n";
 			}
+
+
+			####################
+			######## trio analysis
 
 		} elsif ($trio){
 
@@ -389,6 +484,8 @@ foreach my $pat (@patID){
 			# in case of lookup extract all variants without any restrictions
 			} elsif (@$curFilter[0] eq "LUP" ) {
 
+				$postSql .= "--gt-filter \"(gt_types.(*).(!= 2).(any))\" \ \\\n";
+
 			}
 		}
 
@@ -396,7 +493,7 @@ foreach my $pat (@patID){
 
 
 		###################
-		######## general stuff
+		######## general stuff / naming
 		$postSql .= "--header \\\n";
 
 		# if panel file given add panel name to output
@@ -431,92 +528,180 @@ foreach my $pat (@patID){
 
 
 		# print out info
-		say "Filtering $outFileName";
-
+		if (!$lookup){
+			say "Filtering $outFileName";
+		}
 #	 	say $filterCmd . "\n";
 		# execute filter command
-		if ($cmdOnly){
-			say $filterCmd;
-		} else {
+		if (! $cmdOnly && ! $lookup) {
 			system ($filterCmd);
+		} elsif ($cmdOnly && !$lookup){
+			say "$filterCmd\n\n\n"
 		}
 
 	}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	#################################
+	######## performe lookup ########
+	#################################
+
+
+
+	#### get genes for lookup
+	my @lookup = split(/,/,$lookup);
+
+
+	#### print out Status
+	say "Running lookup for " . join (", ",@lookup);
+
+
+	#### make lookup query
+	my $cmd = "$gemini query -q \\\n";
+	$cmd .= "\" select $cols from variants where \\\n";
+
+	#### add genes for lookup
+	my $setOr = 0;
+	my $geneList;
+	foreach my $curGene (@lookup){
+		$geneList .= "_$curGene";
+		if (!$setOr) {
+			$cmd .= "(gene == '$curGene') \\\n";
+			$setOr = 1;
+		}  else {
+			$cmd .= "or \\\n(gene == '$curGene') \\\n";
+		}
+	}
+	$cmd .= "\" \\\n";
+
+	#### exclude variants where patID has 2 (./.) as genotypes
+	if (!$all){
+		$cmd .= "--gt-filter \"gt_types.$pat != 2\" \ \\\n";
+	}
+
+
+	#### add header
+	$cmd .= "--header \\\n";
+
+	#### add database
+	$cmd .= "$dbName \\\n";
+
+	#### prepare out file
+	my $outFile = "$outDir/$pat\_LUP$geneList.out";
+	if (! $screen){
+		$cmd .= "> $outFile";
+	}
+
+
+	if ($lookup && ! $cmdOnly){
+		system $cmd;
+	} else {
+		say $cmd;
+	}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	######################################
 	######## comp Het post filter ########
 	######################################
+	if (!$lookup){
+		foreach my $curFilter (@difFilters){
 
-	foreach my $curFilter (@difFilters){
-
-		# if filter not specified for comp het scip to next entry
-		next if (@$curFilter[0] !~ "COMP");
+			# if filter not specified for comp het scip to next entry
+			next if (@$curFilter[0] !~ "COMP");
 
 
-		# get input fiel name
-		# if panel file given add panel name to output
-		my $inFileName;
-		if ($panelName) {
-			if ($trio){
-				$inFileName = "$pat-$panelName-@$curFilter[0]-@$curFilter[1]-trio";
+			# get input fiel name
+			# if panel file given add panel name to output
+			my $inFileName;
+			if ($panelName) {
+				if ($trio){
+					$inFileName = "$pat-$panelName-@$curFilter[0]-@$curFilter[1]-trio";
+				} else {
+					$inFileName = "$pat-$panelName-@$curFilter[0]-@$curFilter[1]";
+				}
 			} else {
-				$inFileName = "$pat-$panelName-@$curFilter[0]-@$curFilter[1]";
+				if ($trio) {
+					$inFileName = "$pat-@$curFilter[0]-@$curFilter[1]-trio";
+				} else {
+					$inFileName = "$pat-@$curFilter[0]-@$curFilter[1]";
+				}
 			}
-		} else {
-			if ($trio) {
-				$inFileName = "$pat-@$curFilter[0]-@$curFilter[1]-trio";
-			} else {
-				$inFileName = "$pat-@$curFilter[0]-@$curFilter[1]";
+			my $inFile = "$outDir/$inFileName.out";
+
+
+
+			# check if inFile realy exist
+			( -e $inFile) or die "File $inFile for comp het extraction not found.";
+
+
+			# open file to extract all genes
+			open (INFILE, "<", $inFile);
+			my @fileIn = <INFILE>;
+			close (INFILE);
+
+			# create out file
+			open (my $fileOut, "> $inFile") or die "Can't open file for writing.";
+
+			# extract gene names
+			my @genes;
+			foreach my $curLine (@fileIn) {
+				chomp $curLine;
+				if ( $curLine !~ m/^gene/) {
+					my @splitLine = split ("\t", $curLine);
+					push (@genes, $splitLine[0]);
+				} else {
+					# print out header
+					say $fileOut $curLine;
+				}
 			}
+
+
+			# extract all uniq genes
+			my @uniqueGenes = do { my %seen; grep { !$seen{$_}++ } @genes };
+
+			# for each unique gene check if there are 2 or more entries. if so save as comp het
+			foreach my $curGene (@uniqueGenes) {
+				my @hits = grep {/^$curGene/} @fileIn;
+
+				# check if more then 1 hits found. if so save.
+				if ($#hits + 1 > 1){
+					say $fileOut join ("\n", @hits)
+				}
+			}
+
+			# close new comp Het file
+			close ($fileOut);
+
 		}
-		my $inFile = "$outDir/$inFileName.out";
-
-
-
-		# check if inFile realy exist
-		( -e $inFile) or die "File $inFile for comp het extraction not found.";
-
-
-		# open file to extract all genes
-		open (INFILE, "<", $inFile);
-		my @fileIn = <INFILE>;
-		close (INFILE);
-
-		# create out file
-		open (my $fileOut, "> $inFile") or die "Can't open file for writing.";
-
-		# extract gene names
-		my @genes;
-		foreach my $curLine (@fileIn) {
-			chomp $curLine;
-			if ( $curLine !~ m/^gene/) {
-				my @splitLine = split ("\t", $curLine);
-				push (@genes, $splitLine[0]);
-			} else {
-				# print out header
-				say $fileOut $curLine;
-			}
-		}
-
-
-		# extract all uniq genes
-		my @uniqueGenes = do { my %seen; grep { !$seen{$_}++ } @genes };
-
-		# for each unique gene check if there are 2 or more entries. if so save as comp het
-		foreach my $curGene (@uniqueGenes) {
-			my @hits = grep {/^$curGene/} @fileIn;
-
-			# check if more then 1 hits found. if so save.
-			if ($#hits + 1 > 1){
-				say $fileOut join ("\n", @hits)
-			}
-		}
-
-		# close new comp Het file
-		close ($fileOut);
-
-	}
+}
 
 }
 # print out info that filtering finished succesfully

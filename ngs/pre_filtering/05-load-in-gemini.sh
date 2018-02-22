@@ -1,4 +1,5 @@
-mkdir -p 05-databases
+outDir=02-databases
+mkdir -p $outDir
 
 #define path
 gemini="/data/ngs/bin/gemini/anaconda/bin/gemini"
@@ -57,5 +58,5 @@ do
 	-t all \
 	--cores $CPU \
 	-v $i \
-	05-databases/$filename.db
+	$outDir/$filename.db
 done

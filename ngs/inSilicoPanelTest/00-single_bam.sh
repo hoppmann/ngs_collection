@@ -1,7 +1,8 @@
 # as input use a list of genes one gene per row
 # recieve file containing genes to check
-panelFile=$1
-bamFile=$2
+bamFile=$1
+panelFile=$2
+
 
 ## check if panel file is given and exists
 
@@ -54,7 +55,7 @@ do
 	# if there are unindexed files run single bam else multithred
 	if [ $indexFiles == 1 ]	
 	then	
-		echo "Get coverage: $i nope"
+		echo "Get coverage: $i"
 		~/scripts/ngs/inSilicoPanelTest/03-coverage_singlebam.pl $i $bamFile $outDir 
 	else 
 		echo "Get coverage: $i"
@@ -71,11 +72,14 @@ do
 		
 done
 
+wait
+
 # extract overall coverage for each out file
-for i in $(ls $outDir/*.xls)
+for i in $(ls $outDir/*.csv)
 do 
 	echo $i
 	head -n 1 $i
+	echo ""
 done > $outDir/00-CoverageSummary.xls
 
 
