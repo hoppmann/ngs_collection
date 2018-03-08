@@ -16,17 +16,17 @@ use experimental 'smartmatch';
 
 Options:
 
-	-help					brief help message
-	-man					full documentation
+	-help				brief help message
+	-man				full documentation
 	-database			name of the gemini database to use (mandatory option)
 	-panel				name of the panel file to use (tab seperated list of gene and corresponding transcript)
 	-outDir				name of the output directory (default = "04-filter")
 	-lookup				if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
 	-screen				if chosen the lookup outout is printed on screen instead of a file
-	-all					if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
+	-all				if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
 	-patID				the patient ID to query for, if not given the patID is extracted automatically
-	-trio					if chosen an trio analysis will be performed
-	-parentalIDs	the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
+	-trio				if chosen an trio analysis will be performed
+	-parentalIDs			the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
 	-cmdOnly			if chosen instead of executing the filter, the filter command is printed to screen
 
 
@@ -50,18 +50,18 @@ my @parentalIDs;
 my $cmdOnly;
 
 my $result = GetOptions (
-				"help"							=> \$help,
-				"man"								=> \$man,
-				"panel=s"						=> \$panel,
-				"database=s"				=> \$dbName,
-				"outDir=s"					=> \$outFolder,
-				"lookup=s"					=> \$lookup,
-				"screen"						=> \$screen,
-				"all"								=> \$all,
-				"patID=s"						=> \$patID,
-				"trio"							=> \$trio,
-				"parentalIDs=s{2}"	=> \@parentalIDs,
-				"cmdOnly"						=> \$cmdOnly,
+			"help"				=> \$help,
+			"man"				=> \$man,
+			"panel=s"			=> \$panel,
+			"database=s"		=> \$dbName,
+			"outDir=s"			=> \$outFolder,
+			"lookup=s"			=> \$lookup,
+			"screen"			=> \$screen,
+			"all"				=> \$all,
+			"patID=s"			=> \$patID,
+			"trio"				=> \$trio,
+			"parentalIDs=s{2}"	=> \@parentalIDs,
+			"cmdOnly"			=> \$cmdOnly,
 			);
 pod2usage(-exitstatus => 1, -verbose => 1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -70,7 +70,7 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 # define standard variales
 my $gemini = "/data/ngs/bin/gemini/anaconda/bin/gemini";
-my $columns = "/h/hoppmann/scripts/ngs/filtering/00-columns.sh";
+my $columns = "/h/hoppmann/scripts/ngs/diagnostics/00-columns.sh";
 
 
 ####################
@@ -109,7 +109,7 @@ if (! $patID){
 
 ######## create out dir
 # check if out dir is given
-$outFolder = "04-filter" if (! $outFolder);
+$outFolder = "09-filter" if (! $outFolder);
 
 
 
@@ -201,6 +201,7 @@ foreach my $pat (@patID){
 	chomp $cols;
 	$cols =~ s/columns=//g;
 	$cols =~ s/"//g;
+
 
 	####################
 	######## adapt genotyp output
@@ -298,6 +299,7 @@ foreach my $pat (@patID){
 
 
 	foreach my $curFilter (@difFilters){
+
 
 
 		#init variables
@@ -414,7 +416,6 @@ foreach my $pat (@patID){
 					}
 				}
 			}
-
 
 			# close bracket to conclude block of panel genes
 			push (@sqlQuery, ") \\\n");
@@ -534,8 +535,19 @@ foreach my $pat (@patID){
 #	 	say $filterCmd . "\n";
 		# execute filter command
 		if (! $cmdOnly && ! $lookup) {
-			system ($filterCmd);
+			# in case a panel is filtered check if a gene name is specified, else gemini has an sql error
+			if ($panel) {
+				if ($filterCmd =~ "gene ="){
+					system ($filterCmd);
+				} else {
+					say "Filter skipped since there are no genes in this panel.";
+				}
+			} else {
+				system ($filterCmd);
+			}
 		} elsif ($cmdOnly && !$lookup){
+
+
 			say "$filterCmd\n\n\n"
 		}
 
@@ -563,59 +575,61 @@ foreach my $pat (@patID){
 	#################################
 
 
-
-	#### get genes for lookup
-	my @lookup = split(/,/,$lookup);
-
-
-	#### print out Status
-	say "Running lookup for " . join (", ",@lookup);
+	if ($lookup){
+		#### get genes for lookup
+		my @lookup = split(/,/,$lookup);
 
 
-	#### make lookup query
-	my $cmd = "$gemini query -q \\\n";
-	$cmd .= "\" select $cols from variants where \\\n";
+		#### print out Status
+		say "Running lookup for " . join (", ",@lookup);
 
-	#### add genes for lookup
-	my $setOr = 0;
-	my $geneList;
-	foreach my $curGene (@lookup){
-		$geneList .= "_$curGene";
-		if (!$setOr) {
-			$cmd .= "(gene == '$curGene') \\\n";
-			$setOr = 1;
-		}  else {
-			$cmd .= "or \\\n(gene == '$curGene') \\\n";
+
+		#### make lookup query
+		my $cmd = "$gemini query -q \\\n";
+		$cmd .= "\" select $cols from variants where \\\n";
+
+		#### add genes for lookup
+		my $setOr = 0;
+		my $geneList;
+		foreach my $curGene (@lookup){
+			$geneList .= "_$curGene";
+			if (!$setOr) {
+				$cmd .= "(gene == '$curGene') \\\n";
+				$setOr = 1;
+			}  else {
+				$cmd .= "or \\\n(gene == '$curGene') \\\n";
+			}
 		}
+		$cmd .= "\" \\\n";
+
+		#### exclude variants where patID has 2 (./.) as genotypes
+		if (!$all){
+			$cmd .= "--gt-filter \"gt_types.$pat != 2\" \ \\\n";
+		}
+
+
+		#### add header
+		$cmd .= "--header \\\n";
+
+		#### add database
+		$cmd .= "$dbName \\\n";
+
+		#### prepare out file
+		my $outFile = "$outDir/$pat\_LUP$geneList.out";
+
+		say $outFile;
+		if (! $screen){
+			$cmd .= "> $outFile";
+		}
+
+
+		if ($lookup && ! $cmdOnly){
+			system $cmd;
+		} else {
+			say $cmd;
+		}
+
 	}
-	$cmd .= "\" \\\n";
-
-	#### exclude variants where patID has 2 (./.) as genotypes
-	if (!$all){
-		$cmd .= "--gt-filter \"gt_types.$pat != 2\" \ \\\n";
-	}
-
-
-	#### add header
-	$cmd .= "--header \\\n";
-
-	#### add database
-	$cmd .= "$dbName \\\n";
-
-	#### prepare out file
-	my $outFile = "$outDir/$pat\_LUP$geneList.out";
-	if (! $screen){
-		$cmd .= "> $outFile";
-	}
-
-
-	if ($lookup && ! $cmdOnly){
-		system $cmd;
-	} else {
-		say $cmd;
-	}
-
-
 
 
 

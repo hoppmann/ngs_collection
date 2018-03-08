@@ -35,6 +35,7 @@ do
 	gemini load \
 	-t all \
 	--cores $CPU \
+  --save-info-string \
 	-v $i \
 	$outDir/$filename.db
 done

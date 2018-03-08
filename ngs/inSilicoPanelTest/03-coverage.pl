@@ -48,7 +48,7 @@ die "No bamfiles available in $bamDir.\n" if (scalar (@files) == 0);
 
 
 ###################################################
-#### check that gene has entry, else scip gene ####
+#### check that gene has entry, else skip gene ####
 ###################################################
 
 open (IN, "<", $bedFile);
@@ -57,14 +57,14 @@ close (IN);
 
 my $counter = 0;
 foreach my $curLine (@bed) {
-	
+
 	chomp $curLine;
 	next if ( $curLine eq '' || $curLine =~ /^\s*$/);
 	$counter++;
 
 }
 
-die "Skipping $bedFile: emtpy file!\n" if ($counter == 0);
+die "Skipping $bedFile: empty file!\n" if ($counter == 0);
 
 
 
@@ -73,37 +73,37 @@ die "Skipping $bedFile: emtpy file!\n" if ($counter == 0);
 
 
 # define hash to save coverage information
-# key = bamList; 
+# key = bamList;
 # value = array( all lines in ped file as array )
 # all lines = array ( entries in that line )
 my %infoGather;
 
 foreach my $bamFile (@files){
-	
-	
+
+
 	# check if bamfile exists
 	( -e $bamFile ) or die "Bam file $bamFile not found.";
-	
-	
+
+
 	######################
 	######## check if bam file has index, else create index
 	if ( ! -f "$bamFile.bai" ){
 		# make status update
 		say "#### indexing file $bamFile ####";
-		
+
 		#prepare index command
 		my $indexCmd = "$samtools \\\n";
 		$indexCmd .= "index \\\n";
 		$indexCmd .= "$bamFile";
-		
+
 		# execute index command
 		system ($indexCmd);
 	}
-	
+
 	#########
 	######## extract coverage according to bedfile locations
 	########
-	
+
 	# prepare command
 	my $covExtractCmd = "$samtools \\\n";
 	$covExtractCmd .= "bedcov \\\n";
@@ -117,11 +117,11 @@ foreach my $bamFile (@files){
 		chomp $_;
 		my @splitLine = split ("\t", $_);
 		my $mean = $splitLine[5] / ($splitLine[2] - $splitLine[1]);
-		
+
 		# save mean array with rest of line info
 		push (@splitLine, $mean);
 		push (@{$infoGather{$bamFile}}, \@splitLine);
-		
+
 	}
 
 }
@@ -142,8 +142,8 @@ my $sumAll = 0;
 
 # extract info and print interesting parts out
 foreach my $curBamFile (keys %infoGather) {
-	
-	
+
+
 	# init variables
 	my $goodExon = 0;
 	my $badExon = 0;
@@ -159,43 +159,43 @@ foreach my $curBamFile (keys %infoGather) {
 	# for each bam file extract for each exon if good or bad covered
 	foreach (@curBamArrayOfLines){
 		my @curLine = @$_;
-		
+
 		# check if exon is sufficient covered
 		my $meanCov = ($curLine[$#curLine]);
-		
+
 		if ($meanCov >= $minCov) {
-			
+
 			$goodExon++;
-			
+
 			# save good exons for later print
-			$goodLines .= $curLine[4] . "\t" . sprintf ("%.2f", $meanCov) . "\n";			
-			
+			$goodLines .= $curLine[4] . "\t" . sprintf ("%.2f", $meanCov) . "\n";
+
 		} else {
 
 			$badExon++;
-			
+
 			#save bad exons for later print
 			$badLines .= $curLine[4] . "\t" . sprintf ("%.2f", $meanCov) . "\n";
-			
+
 			push (@{$exonInfo{$curLine[4]}}, basename($curBamFile));
 		}
 	}
-	
-	
-	
-	
-	
+
+
+
+
+
 	# percentual overall coverage
 	my $numAllExon = $#curBamArrayOfLines+1;
 	$sumCov += $goodExon;
 	$sumAll += $numAllExon;
-	
+
 	# prepare entries for upper lines
 	$upperLines .= $curBamFile . "\t" . "$goodExon/" . ($numAllExon) . "\n" ;
 
 	# prepare entries for lowe lines
 	$lowerLines .= "Good covered exons:\nExon\tmeanCov\n" . $goodLines . "\n"  . "Bad covered exons:\nExon\tmeanCov\n" . $badLines . "\n\n";
-	
+
 
 
 }
@@ -210,78 +210,12 @@ foreach my $curBamFile (keys %infoGather) {
 
 	## check that not divided by 0
 	$sumAll = 1 if ($sumAll == 0);
-	
+
 	my $coverLine = "Overall coverage = " . sprintf ("%.2f", ($sumCov / $sumAll) * 100 ) . "%\n";
-	#### open file to write in 
+	#### open file to write in
 	open (my $fhOut, ">", $outFile) or die "Can't create resultfile $outFile\n";
 	say $fhOut $coverLine;
 	say $fhOut $upperLines;
 	say $fhOut $thirdLines;
 	say $fhOut $lowerLines;
 	close $fhOut;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
