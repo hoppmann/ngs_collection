@@ -16,18 +16,32 @@ use experimental 'smartmatch';
 
 Options:
 
+
 -help				brief help message
+
 -man				full documentation
+
 -database			name of the gemini database to use (mandatory option)
+
 -panel				name of the panel file to use (tab seperated list of gene and corresponding transcript)
+
 -outDir				name of the output directory (default = "04-filter")
+
 -noLUP				if chosen skips the lookup step in panel filterin
--lookupGene				if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
+
+-lookupGene				if choosen only the gene of choice will be looked uped, multiple genes lookups
+by comma seperated list
+
 -screen				if chosen the lookup outout is printed on screen instead of a file
+
 -all				if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
+
 -patID				the patient ID to query for, if not given the patID is extracted automatically
+
 -trio				if chosen an trio analysis will be performed
+
 -parentalIDs			the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
+
 -cmdOnly			if chosen instead of executing the filter, the filter command is printed to screen
 
 
@@ -41,7 +55,7 @@ my $man;
 my $panel;
 my $dbName;
 my $outFolder;
-my $noLUP;
+my $lup;
 my $lookup;
 my $all;
 my $screen;
@@ -53,19 +67,19 @@ my $cmdOnly;
 my $maf=0.01;
 
 my $result = GetOptions (
-"help"				=> \$help,
-"man"				=> \$man,
-"panel=s"			=> \$panel,
-"database=s"		=> \$dbName,
-"outDir=s"			=> \$outFolder,
-"lookup=s"			=> \$lookup,
-"screen"			=> \$screen,
-"all"				=> \$all,
-"patID=s"			=> \$patID,
-"trio"				=> \$trio,
-"parentalIDs=s{2}"	=> \@parentalIDs,
-"cmdOnly"			=> \$cmdOnly,
-"noLUP"				=> \$noLUP,
+		"help"				=> \$help,
+		"man"				=> \$man,
+		"panel=s"			=> \$panel,
+		"database=s"		=> \$dbName,
+		"outDir=s"			=> \$outFolder,
+		"lookup=s"			=> \$lookup,
+		"screen"			=> \$screen,
+		"all"				=> \$all,
+		"patID=s"			=> \$patID,
+		"trio"				=> \$trio,
+		"parentalIDs=s{2}"	=> \@parentalIDs,
+		"cmdOnly"			=> \$cmdOnly,
+		"noLUP"				=> \$lup,
 );
 pod2usage(-exitstatus => 1, -verbose => 1) if $help;
 pod2usage(-exitstatus => 0, -verbose => 2) if $man;
@@ -74,7 +88,7 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 # define standard variales
 my $gemini = "/data/ngs/bin/gemini/anaconda/bin/gemini";
-my $columns = "/h/hoppmann/scripts/ngs/diagnostics/00-columns.sh";
+my $columns = "/h/hoppmann/scripts/ngs/diagnostics/pipeline/00-columns.sh";
 
 
 ####################
@@ -292,10 +306,10 @@ foreach my $pat (@patID){
 	# save in hash
 	my @difFilters;
 	if ($panel){
-		if ($noLUP){
-			@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@xlHigh, \@xlMed, \@compHetHigh, \@compHetMed);
+		if ($lup){
+			@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@xlHigh, \@xlMed, \@compHetHigh, \@compHetMed, \@lookupHigh, \@lookupMed, \@lookupAll);
 		} else {
-			@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@xlHigh, \@xlMed, \@compHetHigh, \@compHetMed, \@lookupHigh, \@lookupMed, 	\@lookupAll);
+			@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@xlHigh, \@xlMed, \@compHetHigh, \@compHetMed);
 		}
 	} else {
 		@difFilters = (\@domHigh, \@domMed, \@recHigh, \@recMed, \@compHetHigh, \@compHetMed);

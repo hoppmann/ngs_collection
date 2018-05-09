@@ -14,6 +14,7 @@ then
 fi
 
 vcfDir=$1
+runAlamut=$2
 panels=${@:2}
 
 
@@ -39,6 +40,7 @@ do
 done
 
 
+
 ##### merge vcf-files
 mergedOut="$mergedDir/merged.vcf"
 /data/ngs/bin/vcftools/0.1.13/bin/vcf-merge $files > $mergedOut
@@ -60,22 +62,8 @@ chmod 755 $databaseDir/*.db
 
 ###### annotate with Alamut and update database
 echo "annotating with alamut"
-~/scripts/ngs/diagnostics/pipeline/03-annotate_alamut.sh $mergedOut $databaseDir/merged.db
+~/scripts/ngs/diagnostics/pipeline/03-annotate_alamut.sh $mergedOut $databaseDir/merged.db $runAlamut
 
 
 ######## make gemini databases usable
 chmod 755 $databaseDir/*.db
-
-
-
-##### filter variants
-#for DB in $(ls $databaseDir/*.db)
-#do
-#	for curPanel in ${panels[@]}
-#	do
-#		outDir=$(basename $DB)
-#		outDir="${outDir%.*}"
-#		echo $outDir
-#		/h/hoppmann/scripts/ngs/diagnostics/pipeline/03-universal_filter.pl -d $DB -p $curPanel -t
-#	done
-#done
