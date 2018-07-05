@@ -17,32 +17,31 @@ use experimental 'smartmatch';
 Options:
 
 
--help				brief help message
+	-help		brief help message
 
--man				full documentation
+	-man		full documentation
 
--database			name of the gemini database to use (mandatory option)
+	-database	name of the gemini database to use (mandatory option)
 
--panel				name of the panel file to use (tab seperated list of gene and corresponding transcript)
+	-panel		name of the panel file to use (tab seperated list of gene and corresponding transcript)
 
--outDir				name of the output directory (default = "04-filter")
+	-outDir		name of the output directory (default = "04-filter")
 
--noLUP				if chosen skips the lookup step in panel filterin
+	-noLUP		if chosen skips the lookup step in panel filterin
 
--lookupGene				if choosen only the gene of choice will be looked uped, multiple genes lookups
-by comma seperated list
+	-lookup	if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
 
--screen				if chosen the lookup outout is printed on screen instead of a file
+	-screen		if chosen the lookup outout is printed on screen instead of a file
 
--all				if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
+	-all		if chosen all genotype information of all patients are shown in an lookup, not only the chosen patient
 
--patID				the patient ID to query for, if not given the patID is extracted automatically
+	-patID		the patient ID to query for, if not given the patID is extracted automatically
 
--trio				if chosen an trio analysis will be performed
+	-trio		if chosen an trio analysis will be performed
 
--parentalIDs			the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
+	-parentalIDs	the IDs of the parents to be used for filtering (requires exact 2 entries space seperated)
 
--cmdOnly			if chosen instead of executing the filter, the filter command is printed to screen
+	-cmdOnly	if chosen instead of executing the filter, the filter command is printed to screen
 
 
 =head1 DESCRIPTION
@@ -87,8 +86,8 @@ pod2usage(-exitstatus => 0, -verbose => 2) if $man;
 
 
 # define standard variales
-my $gemini = "/data/ngs/bin/gemini/anaconda/bin/gemini";
-my $columns = "/h/hoppmann/scripts/ngs/diagnostics/pipeline/00-columns.sh";
+my $gemini = "/data/programs/bin/ngs/gemini/anaconda/bin/gemini";
+my $columns = "/data/programs/scripts/hoppmann/00-diagnostics/pipeline/00-columns.sh";
 
 
 ####################

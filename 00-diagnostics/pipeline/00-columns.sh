@@ -22,18 +22,28 @@ qual
 # frequencies
 max_aaf_all
 aaf_1kg_all
-alamut_1000g_AF
+#alamut_1000g_AF
 aaf_exac_all
 aaf_gnomad_all
-alamut_gnomadAltFreq_all
-aaf_gnomad_nfe
-alamut_gnomadAltFreq_nfe
-aaf_esp_all
-alamut_espAllMAF
+#alamut_gnomadAltFreq_all
+#aaf_gnomad_nfe
+#alamut_gnomadAltFreq_nfe
+#aaf_esp_all
+#alamut_espAllMAF
+
+## splice site mutations
+alamut_localSpliceEffect
+alamut_wtMaxEntScore
+alamut_varMaxEntScore
+alamut_wtNNSScore
+alamut_varNNSScore
+alamut_wtGSScore
+alamut_varGSScore
+alamut_wtSSFScore
+alamut_varSSFScore
 
 # impact specific annotations
-alamut_localSpliceEffect
-alamut_rsClinicalSignificance
+#alamut_rsClinicalSignificance
 alamut_clinVarClinSignifs
 clinvar_sig
 vep_clin_sig
@@ -45,12 +55,8 @@ alamut_hgmdId
 alamut_hgmdPhenotype
 alamut_hgmdSubCategory
 alamut_hgmdPubMedId
-# alamut_goCellComp
-# alamut_goMolFunc
 
 # in silico predictions
-# vep_sift_score
-# vep_sift_pred
 sift_score
 sift_pred
 polyphen_score

@@ -13,7 +13,7 @@ mkdir -p $outDir
 
 
 #define path
-gemini="/data/ngs/bin/gemini/anaconda/bin/gemini"
+gemini="/data/programs/bin/ngs/bin/gemini/anaconda/bin/gemini"
 
 #extract number of possible cpu
 CPU=$(cat /proc/cpuinfo | grep processor | wc -l)
@@ -32,7 +32,7 @@ do
 	echo $filename
 	echo $i
 
-	gemini load \
+	$gemini load \
 	-t all \
 	--cores $CPU \
   --save-info-string \

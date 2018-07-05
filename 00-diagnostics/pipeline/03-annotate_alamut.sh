@@ -3,8 +3,6 @@
 #SBATCH --cpus-per-task=6
 
 
-clear
-
 #########################
 ######## prepare ########
 #########################
@@ -14,6 +12,10 @@ db=$2
 runAlamut=$3
 
 CPU=6
+
+
+#### programs
+gemini="/data/programs/bin/ngs/gemini/anaconda/bin/gemini"
 
 #fileIn="00-vcf/consensus.vcf"
 #db="08-database/consensus-vep-snpEff.db"
@@ -34,7 +36,7 @@ out="$alaOut/$fn.alamut"
 ## check if alamut needs to be run, or if this has be done before (userdefined)
 if [ "$runAlamut" != "false" ]
 then
-	/data/ngs/bin/alamut/batch/1.8/alamut-batch \
+	/data/programs/bin/ngs/alamut/batch/1.8/alamut-batch \
 	--outputannonly \
 	--in $fileIn \
 	--hgmdUser hoppmann \
@@ -105,7 +107,7 @@ ALAMUT_COLS=$(zcat $bedFile | head -n 1 | cut -f $start-999 | tr "\t" ",")
 
 
 echo "Updating database"
-gemini annotate $db \
+$gemini annotate $db \
 -f $bedFile \
 -a extract \
 -c $ALAMUT_COLS \
