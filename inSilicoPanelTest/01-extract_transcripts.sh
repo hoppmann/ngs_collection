@@ -8,15 +8,18 @@ fileIn=$1
 file=$(basename $fileIn)
 fileName=${file%.*}
 
-# define out dir 
+# define out dir
 outDir="$2"
 fileOut="$outDir/$fileName-transcripts.pos"
 
 
 # for each gene in gene list extract transcripts
-scriptPath=$(dirname $0)
+#scriptPath=$(dirname $0)
 #dbIn="$scriptPath/00-data/exon.db"
-dbIn="/h/hoppmann/scripts/ngs/inSilicoPanelTest/00-data/exon.db"
+## add path to pipeline
+pipelinePath="/data/programs/scripts/hoppmann/inSilicoPanelTest/"
+
+dbIn="$pipelinePath/00-data/exon.db"
 table=CCDS_GRCh37
 
 # create directory if neede
@@ -43,9 +46,8 @@ do
 	count=$((count+1))
 	echo "$count/$length"
 	sqlite3 $dbIn "select gene, chr, cds_from, cds_to, cds_locations from $table where gene=='$i'" >> $fileOut
-done 
+done
 
 cat $fileOut | sed 's/|/\t/g'| sed 's/\[//g' | sed 's/]//g' | sed 's/, /\t/g' > $outDir/tmp
 
 mv $outDir/tmp $fileOut
-

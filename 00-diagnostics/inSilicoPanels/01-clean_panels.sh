@@ -15,6 +15,8 @@ for i in $(ls $folderIn/*.txt)
 do
 	sed -i 's/ //g' $i
 	sed -i '/^\s*$/d' $i
+	sed -i 's/?//g' $i
+	sed -i 's/+/,/g' $i
 done
 
 

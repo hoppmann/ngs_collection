@@ -29,7 +29,7 @@ Options:
 
 	-noLUP		if chosen skips the lookup step in panel filterin
 
-	-lookup	if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
+	-lup		if choosen only the gene of choice will be looked uped, multiple genes lookups by comma seperated list
 
 	-screen		if chosen the lookup outout is printed on screen instead of a file
 
@@ -71,7 +71,7 @@ my $result = GetOptions (
 		"panel=s"			=> \$panel,
 		"database=s"		=> \$dbName,
 		"outDir=s"			=> \$outFolder,
-		"lookup=s"			=> \$lookup,
+		"lup=s"			=> \$lookup,
 		"screen"			=> \$screen,
 		"all"				=> \$all,
 		"patID=s"			=> \$patID,
@@ -344,6 +344,13 @@ foreach my $pat (@patID){
 		push (@sqlQuery, "select $cols from variants where \\\n");
 		#		push (@sqlQuery, "(aaf_adj_exac_nfe <= 0.01 or aaf_adj_exac_nfe is null or aaf_adj_exac_nfe >= 0.99) \\\n");
 
+
+
+
+
+
+		###################
+		######## MAF filter
 		push (@sqlQuery, "(aaf_gnomad_afr < " . $maf . " or aaf_gnomad_afr > " . (1-$maf) . " or aaf_gnomad_afr is null) \\\n");
 		push(@sqlQuery, "and (aaf_gnomad_eas < $maf or aaf_gnomad_eas > " . (1-$maf) . " or aaf_gnomad_eas is null) \\\n");
 		push(@sqlQuery, "and (aaf_gnomad_nfe < $maf or aaf_gnomad_nfe > " . (1-$maf) . " or aaf_gnomad_nfe is null) \\\n");
@@ -425,7 +432,7 @@ foreach my $pat (@patID){
 
 
 
-					if ("AD" ~~ @{$panelInfo{$curGene}} || $panelInfo{$curGene} eq ""){
+					if ("AD" ~~ @{$panelInfo{$curGene}} || $panelInfo{$curGene} eq "" || "DR" ~~ @{$panelInfo{$curGene}}){
 						# every time besides first time add the or expression
 						if (!$setOr) {
 							push (@sqlQuery, "and ( \\\n(gene = '$curGene') \\\n");
@@ -726,7 +733,7 @@ foreach my $pat (@patID){
 		$cmd .= "$dbName \\\n";
 
 		#### prepare out file
-		my $outFile = "$outDir/$pat\_LUP$geneList.out";
+		my $outFile = "$outDir/$pat-LUP$geneList.out";
 
 		say $outFile;
 		if (! $screen){

@@ -33,24 +33,28 @@ bn=$(basename $fileIn)
 fn=${bn%.*}
 out="$alaOut/$fn.alamut"
 
+
+
 ## check if alamut needs to be run, or if this has be done before (userdefined)
 if [ "$runAlamut" != "false" ]
 then
+	echo "Running Alamut"
 	/data/programs/bin/ngs/alamut/batch/1.8/alamut-batch \
 	--outputannonly \
 	--in $fileIn \
-	--hgmdUser hoppmann \
-	--hgmdPasswd KiKli2016 \
 	--ann $out \
 	--unann $alaOut/unannotated.log
 fi
+
+#        --hgmdUser hoppmann \
+#        --hgmdPasswd KiKli2016 \
 
 
 #############################################################
 ######## prepareing bed file from alamut annotations ########
 #############################################################
 
-echo "preparing bed file"
+echo "Preparing bed file"
 fileIn=$out
 bedFile="$alaOut/$fn.bed.gz"
 
@@ -70,7 +74,7 @@ tabix -p bed $bedFile
 
 ######## prepare variables to read alamut out in gemini ########
 
-echo "preparing variables"
+echo "Preparing variables"
 
 ## extract indexes, coltypes and colmodes
 ALAMUT_IDXS=""
@@ -106,7 +110,7 @@ ALAMUT_COLS=$(zcat $bedFile | head -n 1 | cut -f $start-999 | tr "\t" ",")
 #echo $ALAMUT_MODE
 
 
-echo "Updating database"
+echo "Updating gemini DB"
 $gemini annotate $db \
 -f $bedFile \
 -a extract \
@@ -114,26 +118,3 @@ $gemini annotate $db \
 -e $ALAMUT_IDXS \
 -t $ALAMUT_COLTYPES \
 -o $ALAMUT_MODE
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-echo "Script finished"

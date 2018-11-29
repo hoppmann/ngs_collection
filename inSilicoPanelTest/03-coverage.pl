@@ -6,8 +6,8 @@ use File::Basename;
 
 
 ######## define external programs and resources
-my $samtools = "/data/ngs/bin/samtools/1.3.1/bin/samtools";
-my $hg19 = "/data/ngs/resources/bundle_2.8/ucsc.hg19.fasta";
+my $samtools = "/data/programs/bin/ngs/samtools/1.3.1/bin/samtools";
+my $hg19 = "/data/public_resources/bundle/2.8/ucsc.hg19.fasta";
 
 # get commandline arguments
 my $bedFile = $ARGV[0];

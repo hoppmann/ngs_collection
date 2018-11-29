@@ -12,9 +12,6 @@ if (length(args) != 2) {
 fileIn <- args[1]
 fileOut <- args[2]
 
-# fileIn <- "1556_1-DOM-HIGH.out"
-# fileOut <- "1556_1-DOM-HIGH_mod.out"
-
 
 if (!file.exists(fileIn)) {
   print(paste("ERROR: File ", fileIn, " not found!"))
@@ -22,6 +19,8 @@ if (!file.exists(fileIn)) {
 }
 
 
+## give out filename currently running on
+print (fileIn)
 
 
 ## read in results table data
@@ -113,13 +112,17 @@ for (i in 1:nrow(data)) {
   ##################
   ###### REVEL score
   revelScore = as.numeric(as.character(row$vep_revel_score))
+  revelPred = ""
   
   if(! is.na(revelScore)) {
     
     allCaller = allCaller + 1
-    
+        
     if (revelScore > 0.5){
       damCaller = damCaller + 1
+      revelPred = "D"
+    } else {
+      revelPred = "T"
     }
     
   }
@@ -129,13 +132,16 @@ for (i in 1:nrow(data)) {
   #################
   ###### CADD score
   caddScore = as.numeric(as.character(row$cadd_scaled))
-  
+  caddPred = ""
   if(! is.na(caddScore)) {
     
     allCaller = allCaller + 1
     
     if (caddScore > 15){
       damCaller = damCaller + 1
+      caddPred = "D"
+    } else {
+      caddPred = "T"
     }
     
   }
@@ -171,11 +177,12 @@ for (i in 1:nrow(data)) {
   ##########################
   #### add additional column
 
-    
+  row["revel_score_pred"] <- revelPred
+  row["cadd_pred"] <- caddPred  
   row["damagingPredictions"] <- damCaller
   row["totalPredictions"] <- allCaller
   row["percentDamagingPredictions"] <- percentDamagingPred
-    
+
   
   ## clean variables
   rm(damCaller, allCaller, percentDamagingPred, fathmmScore, metaLRscore, metaSVMscore,
@@ -185,51 +192,51 @@ for (i in 1:nrow(data)) {
   ##########################################
   ######## activity of splice sites ########
   ##########################################
-  
+
   ## init/reset variable
   allSSPredValues = c()
-  
+
   ###############
   ####  EntScore
-  
-  ## calculate max differnece 
+
+  ## calculate max differnece
   varMaxEntScore <- as.numeric(unlist(strsplit(as.character(row$alamut_varMaxEntScore), ",")))
   wtMaxEntScore <- as.numeric(unlist(strsplit(as.character(row$alamut_wtMaxEntScore), ",")))
   percent <- varMaxEntScore / wtMaxEntScore
-  
+
   allSSPredValues <- append(allSSPredValues, min(percent))
   # minPercentEntScore <- min(percent)
   rm(varMaxEntScore, wtMaxEntScore, percent)
 
-    
+
   ############
   #### NNScore
-  
+
   varNNScore <- as.numeric(unlist(strsplit(as.character(row$alamut_varNNSScore), ",")))
   wtNNScore <- as.numeric(unlist(strsplit(as.character(row$alamut_wtNNSScore), ",")))
   percent <- varNNScore / wtNNScore
-  
+
   allSSPredValues <- append(allSSPredValues, min(percent))
   # minPercentNNScore <- min(percent)
   rm(varNNScore, wtNNScore, percent)
-  
-  
+
+
   ############
   #### GSScore
-  
+
   varGSScore <- as.numeric(unlist(strsplit(as.character(row$alamut_varGSScore), ",")))
   wtGSScore <- as.numeric(unlist(strsplit(as.character(row$alamut_wtGSScore), ",")))
   percent <- varGSScore / wtGSScore
-  
+
   allSSPredValues <- append(allSSPredValues, min(percent))
   # minPercentGSScore <- min(percent)
   rm(varGSScore, wtGSScore, percent)
-  
-  
-  
+
+
+
   #############
   #### SSFSCore
-  
+
   varSSFScore <- as.numeric(unlist(strsplit(as.character(row$alamut_varSSFScore), ",")))
   wtSSFScore <- as.numeric(unlist(strsplit(as.character(row$alamut_wtSSFScore), ",")))
   percent <- varSSFScore / wtSSFScore
@@ -237,20 +244,20 @@ for (i in 1:nrow(data)) {
   allSSPredValues <- append(allSSPredValues, min(percent))
   # minPercentSSFScore <- min(percent)
   rm(varSSFScore, wtSSFScore, percent)
-  
-  
+
+
   #####################################
   #### calculate majority for splicing
-  
-  # ## add values to vector to work with vector later on  
+
+  # ## add values to vector to work with vector later on
   # allSSPredValues <- c(minPercentEntScore, minPercentGSScore, minPercentNNScore, minPercentSSFScore)
 
   ## get number of predictions not na
   allSSPred <- sum(!is.na(allSSPredValues))
   highSSPred <- 0
   medSSPred <- 0
-  
-  
+
+
   ## check for each prediction if loss is >45% -> high catagory
   ## or (<45% AND >15%) -> med catagory
   ## check if value is na if so no catagory
@@ -262,66 +269,19 @@ for (i in 1:nrow(data)) {
       medSSPred = medSSPred +1
     }
   }
-  
+
+
   #### add additional column for SS predictions
   row["SSPred15"] <- medSSPred
   row["SSPred45"] <- highSSPred
   row["allSSPred"] <- allSSPred
   row["SSPred15Dec"] <- medSSPred/allSSPred
   row["SSPred45Dec"] <- highSSPred/allSSPred
-  
-  
+
+
   ####################
   #### clean variables
   rm(j, allSSPred, allSSPredValues, highSSPred, medSSPred, minPercentEntScore, minPercentGSScore, minPercentNNScore, minPercentSSFScore)
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  # ################################
-  # ######## get max of MAF ########
-  # ################################
-  # aaf_1kg_all
-  # alamut_1000g_AF
-  # aaf_exac_all
-  # aaf_gnomad_all
-  # alamut_gnomadAltFreq_all
-  # aaf_gnomad_nfe
-  # alamut_gnomadAltFreq_nfe
-  # aaf_esp_all
-  # alamut_espAllMAF
-  # 
-  # # allMAF <- append(allMAF, row$aaf_1kg_all)
-  # # allMAF <- append(allMAF, row$aaf_exac_all)
-  # # allMAF <- append(allMAF, row$aaf_esp_all)
-  # allMAF <- append(allMAF, row$aaf_gnomad_all)
-  # allMAF <- append(allMAF, row$aaf_gnomad_nfe)
-  # allMAF <- append(allMAF, row$)
-  # allMAF <- append(allMAF, row$)
-  # 
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  #stop
-  
-  
-  
-  
-  
-  
   
   
   
@@ -363,6 +323,36 @@ for (i in 1:nrow(data)) {
   outData <- rbind(outData, row)
    
 } # end of iteration over each line
+
+
+######## remove unwanted columns
+# outData <- outData[,-c("alamut_wtMaxEntScore", "alamut_varMaxEntScore", "alamut_wtNNSScore", 
+#                  "alamut_varNNSScore", "alamut_wtGSScore", "alamut_varGSScore", "alamut_wtSSFScore",
+#                  "alamut_varSSFScore", "sift_score", "polyphen_score", "vep_fathmm_score",
+#                  "vep_metalr_score", "vep_metasvm_score", "vep_revel_score")]
+
+
+## splice site prediction
+outData$alamut_wtGSScore <- NULL
+outData$alamut_varGSScore <- NULL
+outData$alamut_wtMaxEntScore <- NULL
+outData$alamut_varMaxEntScore <- NULL
+outData$alamut_wtNNSScore <- NULL
+outData$alamut_varNNSScore <- NULL
+outData$alamut_wtSSFScore <- NULL
+outData$alamut_varSSFScore <- NULL
+
+## prediction tools
+outData$sift_score <- NULL
+outData$polyphen_score <- NULL
+outData$vep_fathmm_score <- NULL
+outData$vep_metalr_score <- NULL
+outData$vep_metasvm_score <- NULL
+outData$vep_revel_score <- NULL
+outData$cadd_scaled <- NULL
+
+# index <- which(colnames(outData)=="")
+# outData <- outData[,]
 
 
 #### write out new file

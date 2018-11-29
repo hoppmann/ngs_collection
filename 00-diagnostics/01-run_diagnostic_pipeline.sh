@@ -26,33 +26,39 @@ databaseDir="03-databases"
 filterDir="04-filter"
 
 mkdir -p $mergedDir
+mergedOut="$mergedDir/merged.vcf"
 
 
-###### merge vcf-files
+###### index vcf-files if not indexed
 files=""
 for i in $(ls $vcfDir/*.vcf)
 do
 	echo $i
-	bgzip -c $i > "$i.gz"
-	tabix "$i.gz"
+	if [ ! -e $i.gz ]
+	then
+		bgzip -c $i > "$i.gz"
+		tabix "$i.gz"
+	fi
 	files="$files $i.gz"
-
 done
 
 
 
 ##### merge vcf-files
-mergedOut="$mergedDir/merged.vcf"
+echo ""
+echo "#### megrging files"
 /data/programs/bin/ngs/vcftools/0.1.13/bin/vcf-merge $files > $mergedOut
 
 
-
-
 ##### annotate variants using VEP and SNPEff
+echo ""
+echo "#### starting VEP and snpEff"
 /data/programs/scripts/hoppmann/00-diagnostics/pipeline/01-annotate.sh $mergedDir $annotateDir
 
 
 ##### load annotated files in gemini DB
+echo ""
+echo "#### creating gemini DB"
 /data/programs/scripts/hoppmann/00-diagnostics/pipeline/02-load-in-gemini.sh $annotateDir $databaseDir
 
 
@@ -61,9 +67,15 @@ chmod 755 $databaseDir/*.db
 
 
 ###### annotate with Alamut and update database
-echo "annotating with alamut"
+echo ""
+echo "#### annotating with alamut"
 /data/programs/scripts/hoppmann/00-diagnostics/pipeline/03-annotate_alamut.sh $mergedOut $databaseDir/merged.db $runAlamut
 
 
 ######## make gemini databases usable
 chmod 755 $databaseDir/*.db
+
+
+
+echo ""
+echo "#### Script finished ####"
