@@ -34,20 +34,22 @@ fn=${bn%.*}
 out="$alaOut/$fn.alamut"
 
 
-
-## check if alamut needs to be run, or if this has be done before (userdefined)
+#### check if alamut needs to be run, or if this has be done before (userdefined)
 if [ "$runAlamut" != "false" ]
 then
 	echo "Running Alamut"
-	/data/programs/bin/ngs/alamut/batch/1.8/alamut-batch \
+	/data/programs/bin/ngs/alamut/batch/1.11/alamut-batch \
 	--outputannonly \
 	--in $fileIn \
 	--ann $out \
+	--dogenesplicer \
+	--donnsplice \
 	--unann $alaOut/unannotated.log
+
 fi
 
-#        --hgmdUser hoppmann \
-#        --hgmdPasswd KiKli2016 \
+       # --hgmdUser hoppmann \
+       # --hgmdPasswd KiKli2016 \
 
 
 #############################################################
@@ -65,10 +67,19 @@ cat $fileIn | awk '{
 	} else {
 		print $2 "\t" ($3 - 1) "\t" $3 + length($4) - 1 "\t" $0
 	}
-}' | cut -f 1-4,9-999 | sed 's/#id/rsId/' | bgzip > $bedFile
+}' | cut -f 1-3,9-999 | bgzip > $bedFile
+
+# | cut -f 1-4,9-999 | sed 's/#id/rsId/' | bgzip > $bedFile
 
 tabix -p bed $bedFile
 
+
+
+
+
+###################################################
+######## preparing gemini annotate command ########
+###################################################
 
 
 
@@ -82,19 +93,57 @@ ALAMUT_COLTYPES=""
 ALAMUT_MODE=""
 
 
-start=4
+
+function chooseType() {
+
+	if [[ $1 == *gnomad* ]]; then
+		colMode="max"
+		colType="float"
+	elif [[ $1 == *1000g* ]]; then
+		colMode="max"
+		colType="float"
+
+	elif [[ $1 ==  *esp* ]]; then
+		colMode="max"
+		colType="float"
+
+	elif [[ $1 == *rsId* ]]; then
+		colMode="first"
+		colType=text
+	else
+		colMode="list"
+		colType="text"
+	fi
+
+}
+
+
+start=3
+
+
+#### get all header besides chrom start stop
+ALAMUT_COLS=$(zcat $bedFile | head -n 1 | cut -f $start-999 | tr "\t" ",")
+IFS=',' read -r -a ALAMUT_ARRAY <<< "$ALAMUT_COLS"
+
+
+
+
 nAnno=$(zcat $bedFile | head -n 1 | wc | awk '{ print $2 }')
+
 for (( i=$start; i<=$nAnno; i++ ))
 do
+
+	chooseType "${ALAMUT_ARRAY[$i - 4]}"
+
 	if [ $i -eq $start ]
 	then
 		ALAMUT_IDXS=$i
-		ALAMUT_COLTYPES="text"
-		ALAMUT_MODE="list"
+		ALAMUT_COLTYPES=$colType
+		ALAMUT_MODE=$colMode
 	else
 		ALAMUT_IDXS="$ALAMUT_IDXS,$i"
-		ALAMUT_COLTYPES="$ALAMUT_COLTYPES,text"
-		ALAMUT_MODE="$ALAMUT_MODE,list"
+		ALAMUT_COLTYPES="$ALAMUT_COLTYPES,$colType"
+		ALAMUT_MODE="$ALAMUT_MODE,$colMode"
 	fi
 done
 
@@ -102,12 +151,11 @@ done
 #echo $ALAMUT_COLTYPES
 #echo $ALAMUT_MODE
 
-#### get all header besides chrom start stop
-ALAMUT_COLS=$(zcat $bedFile | head -n 1 | cut -f $start-999 | tr "\t" ",")
-#echo $ALAMUT_COLS
-#echo $ALAMUT_IDXS
-#echo $ALAMUT_COLTYPES
-#echo $ALAMUT_MODE
+
+# echo $ALAMUT_COLS
+# echo $ALAMUT_IDXS
+# echo $ALAMUT_COLTYPES
+# echo $ALAMUT_MODE
 
 
 echo "Updating gemini DB"
@@ -118,3 +166,50 @@ $gemini annotate $db \
 -e $ALAMUT_IDXS \
 -t $ALAMUT_COLTYPES \
 -o $ALAMUT_MODE
+
+
+
+
+
+
+
+$gemini annotate \
+-f $bedFile \
+-c inAlamut \
+-a boolean \
+$db
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+echo "Script finished!"
+# done

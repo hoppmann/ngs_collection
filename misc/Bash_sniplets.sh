@@ -25,10 +25,28 @@ done
 ##################################################
 ######## read in file line wise and split to array
 
-cat $bedFile | head | while IFS=$'\t' read -a chr
+cat $fileIn | head | while IFS=$'\t' read -a chr
 do
 
-	echo ${chr{@}}
+	echo ${chr[@]}
 	echo ${chr[2]}
 
 done
+
+
+
+###########################################
+######## get the path of the current script
+
+SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+SCRIPTPATH=`dirname $SCRIPT`
+echo $SCRIPTPATH
+
+
+
+
+#################################################
+######## extract from match till frist emtpy line
+
+awk '/Bad covered exons/,/^$/' SGA/ACAN.csv
+sed -n '/Bad covered/,/^$/p' SGA/ACAN.csv

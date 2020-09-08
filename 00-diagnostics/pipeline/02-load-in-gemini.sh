@@ -13,11 +13,11 @@ mkdir -p $outDir
 echo "load in gemini"
 
 #define path
+# gemini="/data/programs/bin/ngs/gemini/bin/gemini"
 gemini="/data/programs/bin/ngs/gemini/anaconda/bin/gemini"
-
 #extract number of possible cpu
 CPU=$(cat /proc/cpuinfo | grep processor | wc -l)
-CPU=1
+CPU=20
 
 ## remove old db if exists to avoid locked DB error
 
@@ -26,13 +26,18 @@ CPU=1
 for i in $(ls $1/*.vcf.gz)
 do
 
+
+	filename=$(basename "$i")
+	# filename="${filename%-vep.vcf.gz}"
+	filename="${filename%-vep-snpeff.vcf.gz}"
+
+
 	if [ -e $outDir/$filename.db ]
 	then
 		rm $outDir/$filename.db
 	fi
 
-	filename=$(basename "$i")
-	filename="${filename%-vep-snpeff.vcf.gz}"
+
 
 	echo $filename
 	echo $i

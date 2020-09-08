@@ -4,7 +4,9 @@ bamFile=$1
 panelFile=$2
 
 ## add path to pipeline
-pipelinePath="/data/programs/scripts/hoppmann/inSilicoPanelTest/"
+pipelinePath="/data/programs/scripts/hoppmann/00-diagnostics/panelCoverage/"
+maxCPU=$(cat /proc/cpuinfo | grep processor  | wc -l)
+
 
 ## check if panel file is given and exists
 
@@ -27,7 +29,6 @@ then
 fi
 
 
-maxCPU=$(cat /proc/cpuinfo | grep processor  | wc -l)
 
 
 

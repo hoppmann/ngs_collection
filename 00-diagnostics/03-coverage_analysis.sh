@@ -1,1 +1,0 @@
-/data/programs/scripts/hoppmann/inSilicoPanelTest/00-single_bam.sh

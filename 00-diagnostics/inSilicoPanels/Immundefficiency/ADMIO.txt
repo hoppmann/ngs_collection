@@ -1,0 +1,2 @@
+STAT3	AD
+ZAP70	AR
